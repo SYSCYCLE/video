@@ -20,18 +20,18 @@ const octokit = new Octokit({ auth: GITHUB_TOKEN });
 
 app.get('/', async (req, res) => {
     const ipAdresi = req.ip;
+
+    if (ipAdresi === '::1') {
+        return res.send("Health check OK.");
+    }
+
     let locationInfo = { status: "fail", message: "Lokasyon bilgisi alinamadi."};
 
     try {
         const response = await fetch(`http://ip-api.com/json/${ipAdresi}`);
         const data = await response.json();
-
         if (data.status === 'success') {
-            locationInfo = {
-                ulke: data.country,
-                sehir: data.city,
-                iss: data.isp,
-            };
+            locationInfo = { ulke: data.country, sehir: data.city, iss: data.isp };
         }
     } catch (e) {
         console.error("Geolocation API hatasi:", e);
@@ -42,7 +42,6 @@ app.get('/', async (req, res) => {
     try {
         let currentContent = '';
         let fileSha = undefined;
-
         try {
             const { data: fileData } = await octokit.repos.getContent({
                 owner: REPO_OWNER,
@@ -57,7 +56,6 @@ app.get('/', async (req, res) => {
 
         const newContent = currentContent + logEntry;
         const newContentBase64 = Buffer.from(newContent).toString('base64');
-
         await octokit.repos.createOrUpdateFileContents({
             owner: REPO_OWNER,
             repo: REPO_NAME,
@@ -68,14 +66,12 @@ app.get('/', async (req, res) => {
         });
 
         console.log(`IP ve Lokasyon basariyla GitHub'a kaydedildi: ${ipAdresi}`);
-        
         res.send(`
-            <h1 style="display: none;">Bilgileriniz Başarıyla Kaydedildi</h1>
-            <p style="display: none;"><b>IP Adresiniz:</b> ${ipAdresi}</p>
-            <p style="display: none;"><b>Tahmini Konum:</b> ${locationInfo.sehir || 'Bilinmiyor'}, ${locationInfo.ulke || 'Bilinmiyor'}</p>
-            <p style="display: none;"><b>İnternet Sağlayıcınız:</b> ${locationInfo.iss || 'Bilinmiyor'}</p>
+            <h1>Bilgileriniz Başarıyla Kaydedildi</h1>
+            <p><b>IP Adresiniz:</b> ${ipAdresi}</p>
+            <p><b>Tahmini Konum:</b> ${locationInfo.sehir || 'Bilinmiyor'}, ${locationInfo.ulke || 'Bilinmiyor'}</p>
+            <p><b>İnternet Sağlayıcınız:</b> ${locationInfo.iss || 'Bilinmiyor'}</p>
         `);
-
     } catch (error) {
         console.error("GitHub'a yazma hatasi:", error.message);
         res.status(500).send("Bilgiler kaydedilirken bir hata olustu.");
