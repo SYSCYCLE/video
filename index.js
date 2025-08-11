@@ -4,6 +4,8 @@ const { Octokit } = require("@octokit/rest");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+app.set('trust proxy', 1);
+
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const REPO_OWNER = process.env.REPO_OWNER;
 const REPO_NAME = process.env.REPO_NAME;
@@ -16,10 +18,9 @@ if (!GITHUB_TOKEN || !REPO_OWNER || !REPO_NAME) {
 
 const octokit = new Octokit({ auth: GITHUB_TOKEN });
 
-app.set('trust proxy', 1);
-
 app.get('/', async (req, res) => {
-    const ipAdresi = req.ip;
+    const ipAdresi = req.ip; 
+    
     const logEntry = `${new Date().toISOString()} - IP: ${ipAdresi}\n`;
 
     try {
@@ -35,9 +36,7 @@ app.get('/', async (req, res) => {
             currentContent = Buffer.from(fileData.content, 'base64').toString('utf8');
             fileSha = fileData.sha;
         } catch (error) {
-            if (error.status !== 404) {
-                throw error;
-            }
+            if (error.status !== 404) throw error;
         }
 
         const newContent = currentContent + logEntry;
