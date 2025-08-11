@@ -1,13 +1,11 @@
 {
   "name": "ip-yakalama-projesi",
   "version": "1.0.0",
-  "description": "Render uzerinde kullanici IP adresini yakalayan NodeJS projesi.",
+  "description": "Kullanici IP adresini yakalayan NodeJS projesi.",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
   },
-  "author": "",
-  "license": "ISC",
   "dependencies": {
     "express": "^4.18.2"
   }
