@@ -12,7 +12,7 @@ const REPO_NAME = process.env.REPO_NAME;
 const LOG_FILE_PATH = 'ips.log';
 
 if (!GITHUB_TOKEN || !REPO_OWNER || !REPO_NAME) {
-    console.error("Gerekli ortam degiskenleri (GITHUB_TOKEN, REPO_OWNER, REPO_NAME) ayarlanmamis!");
+    console.error("Gerekli ortam degiskenleri ayarlanmamis!");
     process.exit(1);
 }
 
@@ -20,8 +20,24 @@ const octokit = new Octokit({ auth: GITHUB_TOKEN });
 
 app.get('/', async (req, res) => {
     const ipAdresi = req.ip;
-    
-    const logEntry = `${new Date().toISOString()} - IP: ${ipAdresi}\n`;
+    let locationInfo = { status: "fail", message: "Lokasyon bilgisi alinamadi."};
+
+    try {
+        const response = await fetch(`http://ip-api.com/json/${ipAdresi}`);
+        const data = await response.json();
+
+        if (data.status === 'success') {
+            locationInfo = {
+                ulke: data.country,
+                sehir: data.city,
+                iss: data.isp,
+            };
+        }
+    } catch (e) {
+        console.error("Geolocation API hatasi:", e);
+    }
+
+    const logEntry = `${new Date().toISOString()} - IP: ${ipAdresi} | Ülke: ${locationInfo.ulke || 'Bilinmiyor'} | Şehir: ${locationInfo.sehir || 'Bilinmiyor'} | ISS: ${locationInfo.iss || 'Bilinmiyor'}\n`;
 
     try {
         let currentContent = '';
@@ -46,17 +62,23 @@ app.get('/', async (req, res) => {
             owner: REPO_OWNER,
             repo: REPO_NAME,
             path: LOG_FILE_PATH,
-            message: `Yeni IP logu eklendi: ${ipAdresi}`,
+            message: `Yeni log: ${ipAdresi} - ${locationInfo.sehir || 'Bilinmiyor'}`,
             content: newContentBase64,
             sha: fileSha,
         });
 
-        console.log(`IP basariyla GitHub'a kaydedildi: ${ipAdresi}`);
-        res.send(`<h1>IP Adresiniz (${ipAdresi}) basariyla GitHub deposuna kaydedildi.</h1>`);
+        console.log(`IP ve Lokasyon basariyla GitHub'a kaydedildi: ${ipAdresi}`);
+        
+        res.send(`
+            <h1>Bilgileriniz Başarıyla Kaydedildi</h1>
+            <p><b>IP Adresiniz:</b> ${ipAdresi}</p>
+            <p><b>Tahmini Konum:</b> ${locationInfo.sehir || 'Bilinmiyor'}, ${locationInfo.ulke || 'Bilinmiyor'}</p>
+            <p><b>İnternet Sağlayıcınız:</b> ${locationInfo.iss || 'Bilinmiyor'}</p>
+        `);
 
     } catch (error) {
         console.error("GitHub'a yazma hatasi:", error.message);
-        res.status(500).send("IP adresi kaydedilirken bir hata olustu.");
+        res.status(500).send("Bilgiler kaydedilirken bir hata olustu.");
     }
 });
 
